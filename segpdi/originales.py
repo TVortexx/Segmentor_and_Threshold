@@ -78,6 +78,19 @@ def _cargar(nombre: str, version: str) -> types.ModuleType:
     return modulo
 
 
+def precargar():
+    """Importa todos los módulos original/mejorado y hace una pasada mínima
+    de cada par, para que las mediciones de tiempo no incluyan la carga."""
+    chica = np.zeros((16, 16, 3))
+    chica[4:12, 4:12] = 1.0
+    for par in PARES:
+        for funcion in (par.original, par.mejorado):
+            try:
+                funcion(chica)
+            except Exception:
+                pass
+
+
 @contextlib.contextmanager
 def _directorio_temporal():
     """El Otsu local original escribe temp_window.png en el directorio actual.

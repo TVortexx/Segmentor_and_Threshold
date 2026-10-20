@@ -1,6 +1,12 @@
-# Dependencias de la aplicación original (interfaz PyQt5)
+# --- Aplicación original (interfaz de escritorio PyQt5) ---
 numpy>=1.24
-scipy>=1.10
 opencv-python>=4.8
 matplotlib>=3.7
 PyQt5>=5.15
+
+# --- Agregado en esta versión (técnicas nuevas, benchmark y demo web) ---
+scipy>=1.10
+scikit-image>=0.21
+pandas>=2.0
+streamlit>=1.50
+pytest>=7.0
