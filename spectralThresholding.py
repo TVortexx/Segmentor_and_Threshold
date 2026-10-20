@@ -61,38 +61,28 @@ class ThresholdingProcessor(QObject):
         hist, bins = np.histogram(image.flatten(), bins=256, range=[0,256])
         hist = hist.astype(float) / hist.sum()  # Normalize
         
-        # Initialize best thresholds and variance
+        # Cambio: el original probaba los ~32.000 pares (t1, t2) con dos bucles
+        # Python y recalculaba sumas del histograma en cada par (~0,6 s).
+        # Con sumas acumuladas, cada clase sale en O(1) y todos los pares se
+        # evalúan a la vez como una matriz 256x256 (mismos umbrales, ~ms).
+        P = np.concatenate([[0.0], np.cumsum(hist)])                  # P[k] = sum(hist[:k])
+        S = np.concatenate([[0.0], np.cumsum(hist * np.arange(256))])  # S[k] = sum(i*hist[:k])
+        t1 = np.arange(256)[:, None]
+        t2 = np.arange(256)[None, :]
+        w0, w1, w2 = P[t1], P[t2] - P[t1], P[256] - P[t2]
+        s0, s1, s2 = S[t1], S[t2] - S[t1], S[256] - S[t2]
+        valido = (t1 >= 1) & (t1 <= 253) & (t2 > t1) & (t2 <= 254) & (w0 > 0) & (w1 > 0) & (w2 > 0)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            m0, m1, m2 = s0 / w0, s1 / w1, s2 / w2
+            mean_total = m0 * w0 + m1 * w1 + m2 * w2
+            var = (w0 * (m0 - mean_total) ** 2 + w1 * (m1 - mean_total) ** 2
+                   + w2 * (m2 - mean_total) ** 2)
+        var = np.where(valido, np.nan_to_num(var), -1.0)
         best_thresholds = []
-        best_var = 0
-        
-        # Try all possible threshold combinations
-        for t1 in range(1, 254):
-            for t2 in range(t1+1, 255):
-                # Class probabilities
-                w0 = np.sum(hist[:t1])
-                w1 = np.sum(hist[t1:t2])
-                w2 = np.sum(hist[t2:])
-                
-                if w0 == 0 or w1 == 0 or w2 == 0:
-                    continue
-                
-                # Class means
-                mean0 = np.sum(np.arange(t1) * hist[:t1]) / w0
-                mean1 = np.sum(np.arange(t1, t2) * hist[t1:t2]) / w1
-                mean2 = np.sum(np.arange(t2, 256) * hist[t2:]) / w2
-                
-                # Total mean
-                mean_total = mean0 * w0 + mean1 * w1 + mean2 * w2
-                
-                # Between-class variance
-                var = (w0 * (mean0 - mean_total)**2 + 
-                    w1 * (mean1 - mean_total)**2 + 
-                    w2 * (mean2 - mean_total)**2)
-                
-                if var > best_var:
-                    best_var = var
-                    best_thresholds = [t1, t2]
-        
+        if var.max() > 0:
+            i, j = np.unravel_index(np.argmax(var), var.shape)   # primer máximo, como el original
+            best_thresholds = [int(i), int(j)]
+
         # Apply thresholds
         segmented = np.zeros_like(image, dtype=np.uint8)
         if len(best_thresholds) == 2:
