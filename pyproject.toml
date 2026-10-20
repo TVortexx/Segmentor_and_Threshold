@@ -1,0 +1,10 @@
+[project]
+name = "segpdi"
+version = "1.0.0"
+description = "Extensión de Segmentor_and_Threshold: banco de pruebas de segmentación (PDI - FPUNE)"
+requires-python = ">=3.10"
+readme = "README.md"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
