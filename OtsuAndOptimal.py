@@ -5,8 +5,39 @@ import matplotlib.pyplot as plt
 
 class OtsuAndOptimal:
     def __init__(self, image_path):
-        # image must already be grayscale!
-        self.image = self.read_image(image_path)
+        # Acepta una ruta (comportamiento original) o directamente un arreglo
+        # de NumPy. Antes solo aceptaba rutas, por eso local_otsu/local_optimal
+        # tenían que guardar cada ventana en un archivo temporal.
+        if isinstance(image_path, np.ndarray):
+            self.image = self._a_gris_uint8(image_path)
+        else:
+            self.image = self.read_image(image_path)
+
+    @staticmethod
+    def _a_gris_uint8(img):
+        img = np.asarray(img)
+        if img.ndim == 3:
+            img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+        if img.dtype != np.uint8:
+            img = np.clip(img, 0, 255).astype(np.uint8)
+        return img
+
+    def otsu_threshold_value(self):
+        """Devuelve el umbral de Otsu (0-255) sin aplicar la máscara."""
+        histogram, _ = np.histogram(self.image.ravel(), bins=256, range=(0, 256))
+        p = histogram.astype(np.float64)
+        total = p.sum()
+        if total == 0:
+            return 0
+        w0 = np.cumsum(p)                    # píxeles en la clase 0 (<= t)
+        sum0 = np.cumsum(p * np.arange(256))
+        w1 = total - w0
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mean0 = sum0 / w0
+            mean1 = (sum0[-1] - sum0) / w1
+            between = w0 * w1 * (mean0 - mean1) ** 2
+        between = np.nan_to_num(between, nan=0.0, posinf=0.0)
+        return int(np.argmax(between))
 
     def optimal_thresholding(self, initial_threshold=128, tolerance=0.25):
         gray_image = self.image
@@ -59,7 +90,9 @@ class OtsuAndOptimal:
                 max_variance = variance_between
                 threshold = t
 
-        binary_result = (gray_image >= threshold).astype(np.uint8) * 255
+        # Corrección: el valor t pertenece a la clase de fondo (se acumuló en
+        # background_w), así que el objeto es g > t. Antes era g >= t.
+        binary_result = (gray_image > threshold).astype(np.uint8) * 255
         return binary_result
     
     def read_image(self, image_path):
@@ -82,8 +115,8 @@ class OtsuAndOptimal:
             for j in range(0, w, window_size):
                 window = gray_image[i:i+window_size, j:j+window_size]
 
-                cv2.imwrite('temp_window.png', window)  # Save window temporarily
-                local_thresholder = OtsuAndOptimal('temp_window.png') 
+                # Antes: se escribía temp_window.png en disco y se volvía a leer.
+                local_thresholder = OtsuAndOptimal(window)
                 local_result = local_thresholder.otsu_thresholding()
 
                 result[i:i+window_size, j:j+window_size] = local_result
@@ -100,8 +133,8 @@ class OtsuAndOptimal:
             for j in range(0, w, window_size):
                 window = gray_image[i:i+window_size, j:j+window_size]
 
-                cv2.imwrite('temp_window.png', window)  # Save window temporarily
-                local_thresholder = OtsuAndOptimal('temp_window.png')  
+                # Antes: se escribía temp_window.png en disco y se volvía a leer.
+                local_thresholder = OtsuAndOptimal(window)
                 local_result = local_thresholder.optimal_thresholding()
 
                 result[i:i+window_size, j:j+window_size] = local_result
