@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+
+# Archivos temporales que generaba la versión original
+temp_window.png
