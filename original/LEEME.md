@@ -2,7 +2,7 @@
 
 Esta carpeta es una copia **exacta** de los archivos `.py` y `.ui` del repositorio
 [Computer-Vision-Toolkit/Segmentor_and_Threshold](https://github.com/Computer-Vision-Toolkit/Segmentor_and_Threshold)
-en el commit `7ef53e7` (tag `base-original`), de los autores Ibrahim Fateen, Bassant Zaki,
+en el commit `7ef53e7` (rama `original` del fork), de los autores Ibrahim Fateen, Bassant Zaki,
 Mohamed Hisham y Yasmine Mahmoud.
 
 Se conserva para comparar 1:1 con las versiones mejoradas de la raíz del repositorio:
@@ -22,6 +22,6 @@ cd original
 python main.py
 ```
 
-Verificación de que no se modificó: `git diff base-original -- OtsuAndOptimal.py` compara
-la raíz con el original, y `git show base-original:OtsuAndOptimal.py | diff - original/OtsuAndOptimal.py`
-no debe mostrar diferencias.
+Verificación de que no se modificó: `git diff original main -- OtsuAndOptimal.py` compara
+la raíz con el original, y `git show original:OtsuAndOptimal.py | diff - original/OtsuAndOptimal.py`
+no debe mostrar diferencias. El README de los autores está en `README_original.md`.
