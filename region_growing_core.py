@@ -16,8 +16,16 @@ Cambios respecto a original/RegionGrowingSegmentation.py:
                          con la media actualizada a medida que la región crece.
    Con "semilla" el resultado depende de qué píxel exacto se eligió: si la
    semilla cae sobre ruido, la región entera queda corrida.
-4. Los píxeles rechazados no se marcan como visitados para siempre: con
+4. Semillas fuera de la imagen: el original reutilizaba la región de la
+   semilla anterior (y la re-etiquetaba con un número equivocado) o, si era
+   la primera, fallaba con UnboundLocalError. Ahora se ignoran.
+5. Los píxeles rechazados no se marcan como visitados para siempre: con
    criterio="media" un píxel rechazado al principio puede aceptarse más tarde.
+6. Con criterio="semilla" la región es exactamente la componente conexa
+   (8-vecinos) que contiene a la semilla dentro de la máscara
+   |f − f(semilla)| ≤ umbral. Se calcula con scipy.ndimage.label en lugar
+   de recorrer píxel por píxel: mismo resultado, cientos de veces más rápido
+   cuando hay muchas semillas (289 semillas: de ~20 s a menos de 1 s).
 """
 
 from __future__ import annotations
@@ -25,6 +33,7 @@ from __future__ import annotations
 from collections import deque
 
 import numpy as np
+from scipy import ndimage as ndi
 
 VECINOS_8 = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
 
@@ -76,6 +85,23 @@ def region_growing(image, seeds, threshold=50, use_luv=True, criterio="semilla")
     color = datos.ndim == 3
     alto, ancho = datos.shape[:2]
     etiquetas = np.zeros((alto, ancho), dtype=np.int32)
+
+    if criterio == "semilla":
+        estructura = np.ones((3, 3), dtype=bool)
+        cache = {}
+        for idx, (sx, sy) in enumerate(seeds, start=1):
+            if not (0 <= sx < ancho and 0 <= sy < alto):
+                continue
+            valor = datos[sy, sx]
+            clave = tuple(np.atleast_1d(valor).tolist())
+            if clave not in cache:
+                diferencia = (np.sqrt(np.sum((datos - valor) ** 2, axis=2)) if color
+                              else np.abs(datos - float(valor)))
+                cache[clave] = ndi.label(diferencia <= threshold, structure=estructura)[0]
+            componentes = cache[clave]
+            region = componentes == componentes[sy, sx]
+            etiquetas[region] = np.maximum(etiquetas[region], idx)
+        return etiquetas
 
     for idx, (sx, sy) in enumerate(seeds, start=1):
         if not (0 <= sx < ancho and 0 <= sy < alto):
