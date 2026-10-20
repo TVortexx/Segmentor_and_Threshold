@@ -65,153 +65,18 @@ def cv2_to_qimage(cv_image):
 
     return None
 
-def rgb_to_luv_vectorized(image):
-    # Normalize RGB to [0,1]
-    rgb = image.astype(float) / 255.0
-
-    # Apply gamma correction
-    mask = rgb <= 0.04045
-    rgb[mask] /= 12.92
-    rgb[~mask] = ((rgb[~mask] + 0.055) / 1.055) ** 2.4
-
-    # RGB to XYZ matrix
-    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    X = r * 0.412453 + g * 0.357580 + b * 0.180423
-    Y = r * 0.212671 + g * 0.715160 + b * 0.072169
-    Z = r * 0.019334 + g * 0.119193 + b * 0.950227
-
-    # Constants for white point D65
-    Yn = 1.0
-    xn, yn = 0.312713, 0.329016
-    un = 4 * xn / (xn + 15 * yn + 3 * (1 - xn - yn))
-    vn = 9 * yn / (xn + 15 * yn + 3 * (1 - xn - yn))
-
-    # Avoid division by zero
-    epsilon = 1e-10
-    denominator = X + 15 * Y + 3 * Z
-    denominator = np.maximum(denominator, epsilon)
-
-    # Calculate u' and v'
-    u = 4 * X / denominator
-    v = 9 * Y / denominator
-
-    # Calculate L*
-    Y_ratio = Y / Yn
-    mask = Y_ratio > 0.008856
-    L = np.zeros_like(Y_ratio)
-    L[mask] = 116 * (Y_ratio[mask] ** (1 / 3)) - 16
-    L[~mask] = 903.3 * Y_ratio[~mask]
-
-    # Calculate u* and v*
-    U = 13 * L * (u - un)
-    V = 13 * L * (v - vn)
-
-    # Stack channels
-    luv_image = np.stack([L, U, V], axis=2)
-    return luv_image
+# La conversión a LUV y el algoritmo se movieron a region_growing_core.py
+# (sin PyQt) para poder usarlos y medirlos fuera de la interfaz.
+from region_growing_core import rgb_to_luv_vectorized  # noqa: E402,F401
+from region_growing_core import region_growing as _region_growing_core  # noqa: E402
 
 
-def region_growing(image, seeds, threshold=50, use_luv=True):
-    """
-    Perform region growing segmentation with optional CIELUV color space support
-
-    Args:
-        image: NumPy array of image data (RGB or grayscale)
-        seeds: List of (x, y) tuples as starting points
-        threshold: Distance threshold for region inclusion
-        use_luv: Boolean to use CIELUV color space (default: True)
-
-    Returns:
-        NumPy array of binary segmentation mask
-    """
-    # convert qimage to cv2 image
+def region_growing(image, seeds, threshold=50, use_luv=True, criterio="semilla"):
+    """Envoltura compatible con la interfaz: acepta QImage o arreglo NumPy.
+    Ver region_growing_core.region_growing para los cambios respecto al original."""
     if isinstance(image, QImage):
         image = qimage_to_numpy(image)
-
-    # Handle color space conversion
-    if len(image.shape) == 3 and use_luv:
-        # Convert BGR to CIELUV for better perceptual color distance
-        # Note: OpenCV expects BGR order by default
-        luv_image = rgb_to_luv_vectorized(image)
-        processed_image = luv_image
-    elif len(image.shape) == 3 and not use_luv:
-        # Keep original RGB image
-        processed_image = image.copy()
-    else:
-        # For grayscale images
-        processed_image = image.copy()
-        use_luv = False  # Force use_luv to False for grayscale
-
-    # Get dimensions based on original image
-    if len(image.shape) == 3:
-        height, width, _ = processed_image.shape
-    else:
-        height, width = processed_image.shape
-
-    # Create segmentation mask for all seeds
-    overall_segmentation = np.zeros((height, width), dtype=np.uint8)
-
-    # Process each seed point separately
-    for seed_idx, (seed_x, seed_y) in enumerate(seeds, 1):
-        # Skip if out of bounds
-        if 0 <= seed_x < width and 0 <= seed_y < height:
-            visited = np.zeros((height, width), dtype=bool)
-            seed_segment = np.zeros((height, width), dtype=np.uint8)
-
-            # Get seed pixel value
-            if len(processed_image.shape) == 3:
-                seed_value = processed_image[seed_y, seed_x, :].astype(np.float32)
-            else:
-                seed_value = processed_image[seed_y, seed_x]
-
-            # Initialize queue with seed
-            processing_queue = [(seed_x, seed_y)]
-            visited[seed_y, seed_x] = True
-            seed_segment[seed_y, seed_x] = 1
-
-            # Define 8-connected neighbors
-            neighbors = [
-                (-1, -1), (-1, 0), (-1, 1),
-                (0, -1), (0, 1),
-                (1, -1), (1, 0), (1, 1)
-            ]
-
-            # Process queue
-            while processing_queue:
-                x, y = processing_queue.pop(0)
-
-                for dx, dy in neighbors:
-                    nx, ny = x + dx, y + dy
-
-                    # Check bounds
-                    if 0 <= nx < width and 0 <= ny < height:
-                        # Skip if already visited
-                        if not visited[ny, nx]:
-                            visited[ny, nx] = True
-
-                            # Calculate color difference based on color space
-                            if len(processed_image.shape) == 3:
-                                pixel_value = processed_image[ny, nx, :].astype(np.float32)
-                                if use_luv:
-                                    # For CIELUV, use Euclidean distance in LUV space
-                                    color_diff = np.sqrt(np.sum((pixel_value - seed_value) ** 2))
-                                else:
-                                    # For RGB, use Euclidean distance
-                                    color_diff = np.sqrt(np.sum((pixel_value - seed_value) ** 2))
-                            else:
-                                # For grayscale
-                                pixel_value = processed_image[ny, nx]
-                                color_diff = abs(float(pixel_value) - float(seed_value))
-
-                            # Check if pixel is within threshold
-                            if color_diff <= threshold:
-                                seed_segment[ny, nx] = 1
-                                processing_queue.append((nx, ny))
-
-        # Add this segment to the final segmentation
-        overall_segmentation = np.maximum(overall_segmentation, seed_segment * seed_idx)
-
-    return overall_segmentation
+    return _region_growing_core(image, seeds, threshold=threshold, use_luv=use_luv, criterio=criterio)
 
 
 class SeedPixelWidget(QWidget):
