@@ -9,74 +9,69 @@
  # 4. The location of a bend (knee) in the plot is generally considered as an indicator of the appropriate number of clusters.
 
 import numpy as np
-from PyQt5.QtGui import QImage
+
+# QImage se importa solo dentro de kmeans_result_to_qimage: así kmeans() se
+# puede usar sin tener PyQt5 instalado (benchmark, pruebas, app web).
 
 # select k initial centroids for rgb image segmentation
-def create_random_centroids(pixels, k):
-    # m is number of pixels (rows), and n would be 3 (r,g,b)
-    m, n = pixels.shape
-    # Initialize k centroids random from the pixels with 3 channels
-    centroids = np.zeros((k, n))
-    for i in range(k):
-        # Randomly select a pixel from the image
-        rand_index = np.random.randint(0, m)
-        # Assign the pixel value to the centroid
-        centroids[i] = pixels[rand_index]
-    return centroids
+def create_random_centroids(pixels, k, rng=None):
+    """Elige k píxeles al azar como centroides iniciales.
+    Cambio: acepta un generador (rng) para que el resultado sea reproducible
+    y elige píxeles DISTINTOS (el original podía repetir el mismo píxel y
+    dejar un grupo vacío)."""
+    rng = np.random.default_rng() if rng is None else rng
+    m = pixels.shape[0]
+    indices = rng.choice(m, size=min(k, m), replace=False)
+    return pixels[indices].astype(np.float64)
 
 
-def kmeans(image, k=3, max_iters=100):
-    if len(image.shape) == 3:
-        # Reshape the image to a 2D array of pixels
-        pixels = image.reshape(-1, 3)
-    else:
-        # If the image is grayscale, we need to reshape it to 2D
-        pixels = image.reshape(-1, 1)
+def kmeans(image, k=3, max_iters=100, seed=None, verbose=False, return_labels=False):
+    """K-means sobre el color de cada píxel.
 
-    # m is number of pixels (rows), and n would be 3 (r,g,b)
-    m, n = pixels.shape
+    Cambio principal: la asignación de cada píxel al centroide más cercano
+    se calcula para TODOS los píxeles a la vez (matriz de distancias m×k con
+    NumPy) en lugar de un bucle `for i in range(m)` en Python. Mismo
+    algoritmo y mismo resultado, del orden de 100 veces más rápido.
 
-    # Initialize centroids
-    centroids = create_random_centroids(pixels, k)
+    seed:          semilla para que la segmentación sea reproducible.
+    verbose:       el original imprimía cada iteración; ahora es opcional.
+    return_labels: devuelve también el índice de grupo de cada píxel (h, w),
+                   necesario para construir una máscara objeto/fondo.
+    """
+    pixels = image.reshape(-1, 3) if len(image.shape) == 3 else image.reshape(-1, 1)
+    pixels = pixels.astype(np.float64)
+    rng = np.random.default_rng(seed)
+    centroids = create_random_centroids(pixels, k, rng)
+    idx = np.zeros(pixels.shape[0], dtype=int)
 
-    # Initialize variables
-    prev_centroids = np.zeros(centroids.shape)
-    idx = np.zeros(m, dtype=int)  # integer indexing
+    for it in range(max_iters):
+        if verbose:
+            print(f"Iteration {it + 1}/{max_iters}")
+        # ||p − c||² = ||p||² − 2 p·c + ||c||²  (sin bucles por píxel)
+        distancias = ((pixels ** 2).sum(1)[:, None] - 2 * pixels @ centroids.T
+                      + (centroids ** 2).sum(1)[None, :])
+        idx = np.argmin(distancias, axis=1)
 
-    for _ in range(max_iters):
-        print(f"Iteration {_ + 1}/{max_iters}")
-        # Assign clusters
-        for i in range(m):
-            distances = np.linalg.norm(pixels[i] - centroids, axis=1)
-            # Find the index of the closest centroid
-            idx[i] = np.argmin(distances)
-
-        # Update centroids
         prev_centroids = centroids.copy()
-        for i in range(k):
-            # Get all points assigned to the i-th centroid
-            points_in_cluster = pixels[idx == i]
-            # If there are points in the cluster, update the centroid
-            if len(points_in_cluster) > 0:
-                centroids[i] = np.mean(points_in_cluster, axis=0)
+        for i in range(len(centroids)):
+            puntos = pixels[idx == i]
+            if len(puntos) > 0:
+                centroids[i] = puntos.mean(axis=0)
 
-        # Check for convergence
-        # because they might be close enough but not exactly equal
         if np.allclose(centroids, prev_centroids):
-            print(f"Converged at {_} iterations")
+            if verbose:
+                print(f"Converged at {it} iterations")
             break
 
-    # Build segmented image
-    # Assign each pixel to the nearest centroid
-    segmented_image = centroids[idx.astype(int)]
-    # Reshape back to original image shape
-    segmented_image = segmented_image.reshape(image.shape)
-
+    segmented_image = centroids[idx].reshape(image.shape)
+    if return_labels:
+        return segmented_image, idx.reshape(image.shape[:2])
     return segmented_image
 
 
 def kmeans_result_to_qimage(segmented_image):
     """Convert the K-means segmentation result to a QImage"""
+    from PyQt5.QtGui import QImage
     # Make sure the data is in the correct format for QImage
     if segmented_image.dtype != np.uint8:
         # Scale values to 0-255 range
