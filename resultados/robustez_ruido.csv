@@ -1,0 +1,78 @@
+tecnica,ruido,iou
+Bordes · Canny,0.0,0.9816304347826087
+Bordes · Marr-Hildreth (LoG),0.0,0.9774219810040705
+Umbral global iterativo,0.0,0.9831895841344833
+Umbral óptimo de Otsu,0.0,0.9831895841344833
+Umbral adaptativo (local),0.0,0.9913448370309504
+Corrección de fondo morfológica + Otsu,0.0,0.9829698401362412
+K-means en color (Lab),0.0,0.9220071319409068
+Distancia de Mahalanobis al fondo,0.0,0.7006386684730017
+Crecimiento de regiones,0.0,0.9719904977625545
+División y fusión (versión libro),0.0,0.8509708053217996
+División y fusión mejorada,0.0,0.9637472102770671
+Bordes · Canny,0.03,0.9800358053491022
+Bordes · Marr-Hildreth (LoG),0.03,0.9769902859933792
+Umbral global iterativo,0.03,0.9820888962144937
+Umbral óptimo de Otsu,0.03,0.9821438382506456
+Umbral adaptativo (local),0.03,0.9913434144203375
+Corrección de fondo morfológica + Otsu,0.03,0.9823115798725555
+K-means en color (Lab),0.03,0.9214478440156799
+Distancia de Mahalanobis al fondo,0.03,0.8395250684105561
+Crecimiento de regiones,0.03,0.9666869233743992
+División y fusión (versión libro),0.03,0.8695401470376243
+División y fusión mejorada,0.03,0.9745093739721522
+Bordes · Canny,0.06,0.9795575317210715
+Bordes · Marr-Hildreth (LoG),0.06,0.9724458371603004
+Umbral global iterativo,0.06,0.9800593276203032
+Umbral óptimo de Otsu,0.06,0.9800043946385409
+Umbral adaptativo (local),0.06,0.9885773624091381
+Corrección de fondo morfológica + Otsu,0.06,0.9814336720681132
+K-means en color (Lab),0.06,0.919481838963678
+Distancia de Mahalanobis al fondo,0.06,0.8692374183634268
+Crecimiento de regiones,0.06,0.9497265344456107
+División y fusión (versión libro),0.06,0.902836029558618
+División y fusión mejorada,0.06,0.9771434820647419
+Bordes · Canny,0.09,0.9785447255783714
+Bordes · Marr-Hildreth (LoG),0.09,0.5024576886555326
+Umbral global iterativo,0.09,0.9784231909520149
+Umbral óptimo de Otsu,0.09,0.9778717329233473
+Umbral adaptativo (local),0.09,0.9788293897882939
+Corrección de fondo morfológica + Otsu,0.09,0.9799593696809971
+K-means en color (Lab),0.09,0.9171987432856998
+Distancia de Mahalanobis al fondo,0.09,0.8885234635774593
+Crecimiento de regiones,0.09,0.9521573393735153
+División y fusión (versión libro),0.09,0.9125367386236951
+División y fusión mejorada,0.09,0.973844049247606
+Bordes · Canny,0.12,0.9780630484237894
+Bordes · Marr-Hildreth (LoG),0.12,0.3747047366458083
+Umbral global iterativo,0.12,0.9763602457218078
+Umbral óptimo de Otsu,0.12,0.977020949873862
+Umbral adaptativo (local),0.12,0.9644745980020301
+Corrección de fondo morfológica + Otsu,0.12,0.9806922275245461
+K-means en color (Lab),0.12,0.9150194631211769
+Distancia de Mahalanobis al fondo,0.12,0.9055433259955974
+Crecimiento de regiones,0.12,0.9533252319929297
+División y fusión (versión libro),0.12,0.9212199534763504
+División y fusión mejorada,0.12,0.964443716205145
+Bordes · Canny,0.15,0.9775804180656341
+Bordes · Marr-Hildreth (LoG),0.15,0.4167972350230415
+Umbral global iterativo,0.15,0.9740793511617711
+Umbral óptimo de Otsu,0.15,0.9742985532661114
+Umbral adaptativo (local),0.15,0.94832666806988
+Corrección de fondo morfológica + Otsu,0.15,0.9783526059078205
+K-means en color (Lab),0.15,0.9101423040177
+Distancia de Mahalanobis al fondo,0.15,0.9186377017561669
+Crecimiento de regiones,0.15,0.9547361448443364
+División y fusión (versión libro),0.15,0.9176574885273259
+División y fusión mejorada,0.15,0.9631366561238958
+Bordes · Canny,0.2,0.9762420175343652
+Bordes · Marr-Hildreth (LoG),0.2,0.4165023251284299
+Umbral global iterativo,0.2,0.9689124842646817
+Umbral óptimo de Otsu,0.2,0.9689124842646817
+Umbral adaptativo (local),0.2,0.9178460123639708
+Corrección de fondo morfológica + Otsu,0.2,0.9707557502738225
+K-means en color (Lab),0.2,0.5427748957989745
+Distancia de Mahalanobis al fondo,0.2,0.93990234780802
+Crecimiento de regiones,0.2,0.27636380292227125
+División y fusión (versión libro),0.2,0.8937101281172563
+División y fusión mejorada,0.2,0.9629266165085596

@@ -1,0 +1,19 @@
+aporte,variante,escenario,iou,regiones,tiempo_ms
+División y fusión,"División-fusión · libro (media, sin refinar)",E1 · Iluminación uniforme,0.8877495952509444,186.0,99.26168699996651
+División y fusión,"División-fusión · libro (media, sin refinar)",E2 · Iluminación no uniforme,0.3717592306583472,139.0,41.19605400001092
+División y fusión,+ refinamiento a nivel píxel,E1 · Iluminación uniforme,0.9353304056879966,17.0,114.66666000001169
+División y fusión,+ refinamiento a nivel píxel,E2 · Iluminación no uniforme,0.3737813731590956,20.0,69.65461100003267
+División y fusión,+ criterio de frontera (sin refinar),E1 · Iluminación uniforme,0.8992271254051358,260.0,72.63568100006523
+División y fusión,+ criterio de frontera (sin refinar),E2 · Iluminación no uniforme,0.9208867300537412,149.0,80.55772699992758
+División y fusión,División-fusión · completa (frontera + refinamiento),E1 · Iluminación uniforme,0.9762921594393342,6.0,81.24380799995379
+División y fusión,División-fusión · completa (frontera + refinamiento),E2 · Iluminación no uniforme,0.9612917255626835,6.0,97.6451009998982
+División y fusión,suavizado fijo σ=1,E1 con ruido σ=0.15,0.5005205194235932,,
+División y fusión,suavizado adaptativo al ruido,E1 con ruido σ=0.15,0.9631366561238958,,
+Corrección de fondo,modo = resta,E2 · Iluminación no uniforme,0.9029323102219786,,
+Corrección de fondo,modo = division,E2 · Iluminación no uniforme,0.9779274838426991,,
+Movimiento,MOG2 · inicio en frío,E4 · Objetos en movimiento,0.5963648060474812,,
+Movimiento,MOG2 · inicializado con mediana,E4 · Objetos en movimiento,0.9906072755149814,,
+Movimiento,Dif. consecutiva · sin compensar brillo,E4 · Objetos en movimiento,0.3835198374403116,,
+Movimiento,Dif. consecutiva · compensando brillo,E4 · Objetos en movimiento,0.5861604573869577,,
+Movimiento,FFT temporal · sin compensar brillo,E4 · Objetos en movimiento,0.5851969930400599,,
+Movimiento,FFT temporal · compensando brillo,E4 · Objetos en movimiento,0.6667755702219959,,
